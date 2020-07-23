@@ -54,12 +54,6 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
 let v = new URL(window.location.href.toString()).searchParams.get('v')
 if (v != null) {
 	loadSubs(v)
-} else {
-	setSubtitle(`
-		Youtube Video ID/URL: <input id="videoInput" type="text" size="50"></input><button>📂</button><button onclick="loadVideo()">▶️ Load Video</button>
-		Learn: <select><option>Dutch</option><option>more...</option></select> 
-		Using: <select><option>English</option><option>Visuals</option><option>more...</option></select>
-		<br>Example: <a href="#" onclick="loadVideoLink(this.innerHTML)">nonLimlR5Qk</a> or <a href="#" onclick="loadVideoLink(this.innerHTML)">https://www.youtube.com/watch?v=nonLimlR5Qk</a>`)
 }
 
 var SpeechRecognition = SpeechRecognition || webkitSpeechRecognition
@@ -476,10 +470,6 @@ function playSub1() {
 	}
 }
 */
-
-function playNext() {
-	
-}
 
 //let selfplay = false
 
