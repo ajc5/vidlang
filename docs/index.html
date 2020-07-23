@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+<head>
+    <meta charset="UTF-8">
+    <title>Vidlang</title>
+    <meta name="description" content="Learn languages by watching Youtube videos.">
+	<style>
+		a:visited {color: yellow;}
+		a:link {color: green;}
+	</style>
+</head>
+<body bgcolor="black" style="color: white; height: 100%">
+	<div style="position: fixed; top: 0px; right: 10px;">
+		<button onclick="toggleHintsBox()" style="cursor: pointer"><---><button>
+	</div>
+	<div id="hints" style="display: none; background: grey; position: fixed; top: 30px; right: 10px; width: 800px">
+		<div>Hints</div>
+		<div>Letter | Word | Line | Transcript | Language</div>
+		<div>
+			<!--a href="#" onclick="showClip()">Clip</a> | -->
+			<a href="#" onclick="showVideo()">Video</a> |
+			<a href="#" onclick="">Grammar Rules</a> |
+			<a href="#" onclick="">Word Sets</a> |
+			<a href="#" onclick="showBridge()">Bridge</a> 
+		</div>
+		<!--div>
+			Word sets:<br>
+			- vocab
+			- verb tenses
+			- singular/plural
+			- svo order
+			- other relationships
+		
+			Video:
+			- transcript
+		</div-->
+		<div id="submenu"></div><br>
+		<div id="content" style="height: 700px; background: black; overflow: scroll"></div>
+	</div>
+    <div id="ytplayer"></div>
+	<span id="subtitle" style="font-family: arial, helvetica; font-size: 1.5em; width: 100%; text-align: center">&nbsp;</span>
+	<!--div>⌨️
+		<input id="talkInput" type="text"></input>
+		<button onclick="recognition.start()" style="cursor: pointer">⏺️</button>
+	</div-->
+	
+	
+    <script src="lgh/ipa.js" charset="utf-8"></script>
+    <script src="lgh/snowball2letter.js" charset="utf-8"></script>
+    <script src="common/cognates.js"></script>
+    <script src="common/trans-dict.js"></script>
+    <script src="common/lang-names.js"></script>
+    <script src="common/grammar.js"></script>
+    <script src="hints-generator.js" charset="utf-8"></script>
+    <link href="script.css" rel="stylesheet" type="text/css">
+    <script src="script.js" charset="utf-8"></script>
+</body>
+</html>
