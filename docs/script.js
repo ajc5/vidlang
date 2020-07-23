@@ -53,6 +53,7 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
 
 let v = new URL(window.location.href.toString()).searchParams.get('v')
 if (v != null) {
+	document.getElementById('hintsBtn').style.display = 'block'
 	loadSubs(v)
 }
 

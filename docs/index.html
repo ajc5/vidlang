@@ -6,12 +6,12 @@
     <meta name="description" content="Learn languages by watching Youtube videos.">
 	<style>
 		a:visited {color: yellow;}
-		a:link {color: green;}
+		a:link {color: pink;}
 	</style>
 </head>
 <body bgcolor="black" style="color: white; height: 100%">
-	<div style="position: fixed; top: 0px; right: 10px;">
-		<button onclick="toggleHintsBox()" style="cursor: pointer"><---><button>
+	<div id="hintsBtn" style="display: none; position: fixed; top: 0px; right: 10px;">
+		<button onclick="toggleHintsBox()" style="cursor: pointer">↕️</button>
 	</div>
 	<div id="hints" style="display: none; background: grey; position: fixed; top: 30px; right: 10px; width: 800px">
 		<div>Hints</div>
@@ -43,10 +43,13 @@
 	<script>
 		if (new URL(window.location.href.toString()).searchParams.get('v') === null) {
 			document.getElementById('subtitle').innerHTML = `
-				Youtube Video ID/URL: <input id="videoInput" type="text" size="50"></input><button>📂</button><button onclick="loadVideo()">▶️ Load Video</button>
-				Learn: <select><option>Dutch</option><option>more...</option></select> 
-				Using: <select><option>English</option><option>Visuals</option><option>more...</option></select>
-				<br>Example: <a href="#" onclick="loadVideoLink(this.innerHTML)">nonLimlR5Qk</a> or <a href="#" onclick="loadVideoLink(this.innerHTML)">https://www.youtube.com/watch?v=nonLimlR5Qk</a>`
+				Youtube Video ID/URL: <input id="videoInput" type="text" size="50"></input>
+				<button disabled>📂</button>
+				<button onclick="loadVideo()">▶️ Load Video</button>
+				&nbsp; &nbsp; &nbsp; 
+				Learn: <select disabled><option>Dutch</option><option>more...</option></select> 
+				Using: <select disabled><option>English</option><option>Visuals</option><option>more...</option></select>
+				<br><br>Example: <a href="#" onclick="loadVideoLink(this.innerHTML)">nonLimlR5Qk</a> or <a href="#" onclick="loadVideoLink(this.innerHTML)">https://www.youtube.com/watch?v=nonLimlR5Qk</a>`
 		}
 	</script>
     <script src="lgh/ipa.js" charset="utf-8"></script>
