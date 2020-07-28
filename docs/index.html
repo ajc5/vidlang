@@ -10,12 +10,13 @@
 	</style>
 </head>
 <body bgcolor="black" style="color: white; height: 100%">
+	<button id="homeBtn" style="display: none; position: fixed; top: 0; left: 0" onclick="location = '//' + location.host + location.pathname">🏠</button>
 	<div id="hintsBtn" style="display: none; position: fixed; top: 0px; right: 10px;">
 		<button onclick="toggleHintsBox()" style="cursor: pointer">↕️</button>
 	</div>
 	<div id="hints" style="display: none; background: grey; position: fixed; top: 30px; right: 10px; width: 800px">
 		<div>Hints</div>
-		<div>Letter | Word | Line | Transcript | Language</div>
+		<div>Language | Video: Script | Line | Word | Letter </div>
 		<div>
 			<!--a href="#" onclick="showClip()">Clip</a> | -->
 			<a href="#" onclick="showVideo()">Video</a> |
@@ -37,19 +38,26 @@
 		<div id="submenu"></div><br>
 		<div id="content" style="height: 700px; background: black; overflow: scroll"></div>
 	</div>
-    <div id="ytplayer"></div>
-	<span id="subtitle" style="font-family: arial, helvetica; font-size: 1.5em; width: 100%; text-align: center">&nbsp;</span>
+	<div id="ytplayer"></div>
+	<div style="display: grid; grid-template-columns: 0em auto;">
+		<div style="grid-column: 1">
+			<!--button onclick="" style="cursor: pointer" title="Play/Pause">⏯️</button-->
+		</div>
+		<span id="subtitle" style="font-family: arial, helvetica; font-size: 1.5em; width: 100%; grid-column: 2; text-align: center;">
+			&nbsp;
+		</span>
+	</div>
 	
 	<script>
 		if (new URL(window.location.href.toString()).searchParams.get('v') === null) {
 			document.getElementById('subtitle').innerHTML = `
-				Youtube Video ID/URL: <input id="videoInput" type="text" size="50"></input>
-				<button disabled>📂</button>
-				<button onclick="loadVideo()">▶️ Load Video</button>
+				Youtube Video ID/URL: <input id="videoInput" onkeyup="if (event.keyCode === 13) playVideo()" type="text" size="50"></input>
+				<button disabled title="Open">📂</button>
+				<button onclick="playVideo()" title="Play">▶️</button>
 				&nbsp; &nbsp; &nbsp; 
 				Learn: <select disabled><option>Dutch</option><option>more...</option></select> 
 				Using: <select disabled><option>English</option><option>Visuals</option><option>more...</option></select>
-				<br><br>Example: <a href="#" onclick="loadVideoLink(this.innerHTML)">nonLimlR5Qk</a> or <a href="#" onclick="loadVideoLink(this.innerHTML)">https://www.youtube.com/watch?v=nonLimlR5Qk</a>`
+				<br><br>Example: <a href="#" onclick="loadVideoLink(this.innerHTML); document.getElementById('videoInput').focus()">nonLimlR5Qk</a> or <a href="#" onclick="loadVideoLink(this.innerHTML); document.getElementById('videoInput').focus()">https://www.youtube.com/watch?v=nonLimlR5Qk</a>`
 		}
 	</script>
     <script src="lgh/ipa.js" charset="utf-8"></script>

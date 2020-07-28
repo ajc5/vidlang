@@ -1,0 +1,13 @@
+
+v1 improvements:
+- show stats before starting
+- better translator
+  - wrong translations
+  - not splitting words
+  - not trimming punctuation 
+- voice commands - next, repeat, text, record, define+close
+- OK on show answer, highlight wrongly answered words
+- OK press enter to load video, show answer
+- OK add sentence click button for interglot (since interglot it will breakdown into words anyway)
+- OK link to homepage
+- OK repeat button instead of audio

@@ -54,6 +54,7 @@ firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
 let v = new URL(window.location.href.toString()).searchParams.get('v')
 if (v != null) {
 	document.getElementById('hintsBtn').style.display = 'block'
+	document.getElementById('homeBtn').style.display = 'block'
 	loadSubs(v)
 }
 
@@ -74,7 +75,7 @@ recognition.interimResults = false;
 recognition.maxAlternatives = 1;
 
 recognition.onresult = function(event) {
-	document.getElementById('subtitle').querySelector('.textInput').value = `${event.results[0][0].transcript}`
+	document.getElementById('testInput').value = `${event.results[0][0].transcript}`
   	setResultBox(`✅ ${Math.round(event.results[0][0].confidence * 100)}%`)
 }
 
@@ -97,7 +98,7 @@ function loadVideoLink(text) {
 	document.getElementById("videoInput").value = text
 }
 
-function loadVideo() {
+function playVideo() {
 	let videoText = document.getElementById("videoInput").value
 	let videoId = videoText
 	try {
@@ -290,21 +291,38 @@ function toggleHintsBox() {
 	}
 }
 
-function generateHintsLine(subtitle) {
-	let wordRow = [], transRow = [], posRow = []
-	subtitle.wordInfos.forEach(wordInfo => {
-		wordRow.push(wordInfo.word)
+function generateHintsLine(subtitle, highlightArray) {
+	let wordRow = [], transRow = [], posRow = [], knownCountRow = []
+	let kw = JSON.parse(localStorage.getItem('knownWords'))
+	subtitle.wordInfos.forEach((wordInfo, i) => {
+		let word = wordInfo.word
+		if (highlightArray && highlightArray[i])
+			word = `<span style="color: ${highlightArray[i]}">${word}</span>`
+		wordRow.push(word)
 		transRow.push(wordInfo.trans)
 		posRow.push(wordInfo.pos)
+		knownCountRow.push(kw && kw[subtitle.lang] && kw[subtitle.lang][wordInfo.stem] ?  kw[subtitle.lang][wordInfo.stem] : 0)
 	})
-	let table = '<table border="1">' + getHtmlRow(wordRow, 'showWordInfo(event)') 
-	table += getHtmlRow(transRow) + getHtmlRow(posRow) 
+	let table = `<span style="margin: 0 auto; display: grid; grid-template-columns: 2em auto">
+		<span style="grid-column: 1">
+			<button style="cursor: pointer;" onclick="showLineInfo('${subtitle.line}')">➡️</button>
+		</span>
+		<table border="1" style="grid-column: 2">` 
+	table += getHtmlRow(wordRow, 'showWordInfo(event)') 
+	table += getHtmlRow(knownCountRow)
+	table += getHtmlRow(transRow) 
+	table += getHtmlRow(posRow) 
 	table += '</table>'
+	table += `</span>`
 	return table
 }
 
 function showHints(subs) {
 	document.getElementById("content").innerHTML = `
+		<div id='lineInfo' style='display: none'>
+			<a href='#' onclick='document.getElementById("lineInfo").style.display = "none"'>X</a><br>
+			<iframe width='800' height='800'></iframe>
+		</div> 
 		<div id='wordInfo' style='display: none'>
 			<a href='#' onclick='document.getElementById("wordInfo").style.display = "none"'>X</a><br>
 			<iframe width='800' height='400'></iframe>
@@ -326,6 +344,14 @@ function showWordInfo(e) {
 	let iframes = wordInfoBox.querySelectorAll('iframe')
 	iframes[0].src = `https://www.interglot.com/dictionary/en/nl/search/?q=${e.target.innerHTML}`
 	iframes[1].src = `https://woordenlijst.org/#/?q=${e.target.innerHTML}`
+}
+
+function showLineInfo(line) {
+	document.getElementById('hints').style.display = 'block'
+	let lineInfoBox = document.getElementById('lineInfo')
+	lineInfoBox.style.display = 'block'
+	let iframes = lineInfoBox.querySelectorAll('iframe')
+	iframes[0].src = `https://www.interglot.com/dictionary/en/nl/search/?q=${line}`
 }
 
 function loadPlayer(videoId) {
@@ -386,10 +412,10 @@ function playSub(event) {
 							//console.log('i stop', i, currentTimeSecs)
 							player.pauseVideo()
 							setSubtitle(`
-								<button onclick="recognition.start()" style="cursor: pointer">🔴</button>
-								<input class="textInput" type="text" size="100"></input>
-								<button onclick="showSubtitle(this)" style="cursor: pointer">🔤</button>
-								<button onclick="playSubtitle()" style="cursor: pointer">🔈</button>
+								<button onclick="recognition.start()" style="cursor: pointer" title="Record">🔴</button>
+								<input id="testInput" onkeyup="onEventTestInput(event)" onclick="onEventTestInput(event)" type="text" size="100"></input>
+								<button id="showSubtitleBtn" onclick="showSubtitle(this)" style="cursor: pointer" title="Text">🔤</button>
+								<button onclick="playSubtitle()" style="cursor: pointer" title="Repeat">🔁</button>
 								<div class="result"></div>`)
 						}, ((startMargin * 2) + subs[i + 1].start - subs[i].start) * 1000/player.getPlaybackRate())
 					break
@@ -403,19 +429,52 @@ function playSub(event) {
 	}
 }
 
+function onEventTestInput(e) {
+	if (e.type === "click" && e.target.readOnly === true)
+			document.getElementById('showSubtitleBtn').click()
+	else if (e.keyCode === 13)
+		document.getElementById('showSubtitleBtn').click()
+}
+
 function showSubtitle(btn) {
 	if (btn.style.backgroundColor === 'blue') {
 		setResultBox("")
 		btn.style.backgroundColor = ''
+		document.getElementById('testInput').readOnly = false
 	} else {
+		document.getElementById('testInput').readOnly = true
 		let currentTimeSecs = player.getCurrentTime()
+		let knownWords = JSON.parse(localStorage.getItem("knownWords"))
+		if (!knownWords)
+			knownWords = {}
 		for (let i = 2; i < subs.length; i++) {
 			if (subs[i].start > currentTimeSecs) {
-				setResultBox(generateHintsLine(subs[i - 2]))
+				let sub = subs[i - 2]
+				let testWords = document.getElementById('testInput').value.split(' ')
+				let hasWrong = testWords.length !== sub.wordInfos.length
+				sub.wordInfos.forEach((wordInfo, j) => {
+					if (testWords[j] && wordInfo.stem === getStemmed(testWords[j], sub.lang)) {
+						testWords[j] = "yellow"
+						if (!knownWords[sub.lang])
+							knownWords[sub.lang] = {}
+						if (!knownWords[sub.lang][wordInfo.stem])
+							knownWords[sub.lang][wordInfo.stem] = 0
+						knownWords[sub.lang][wordInfo.stem]++
+					} else {
+						testWords[j] = "red"
+						hasWrong = true
+					}
+				})
+				if (!hasWrong)
+					testWords = testWords.map(w => "greenyellow")
+				setResultBox(generateHintsLine(sub, testWords))
 				btn.style.backgroundColor = 'blue'
 				break
 			}
 		}
+		localStorage.setItem("knownWords", JSON.stringify(knownWords))
+		let kw = Object.entries(knownWords[subs[0].lang]).sort((a, b) => b[1] - a[1] )
+		console.log(kw)
 	}
 }
 
@@ -549,7 +608,7 @@ function getWithTranslationSubs(wordInfos) {
         transRow += `<td>${inf.word ? inf.word : ''}</td>`
     }
     if (srcRow.length > 0 || transRow.length > 0)
-        htmlText += `<table border="1">${rowify(srcRow)}${rowify(transRow)}</table>`
+        htmlText += `<table border="1" style="margin: 0 auto;">${rowify(srcRow)}${rowify(transRow)}</table>`
     return htmlText
 }
 

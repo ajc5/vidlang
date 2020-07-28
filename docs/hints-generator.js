@@ -1,8 +1,8 @@
 /*
 shownHints - {
-  		start
-		  dur
-   		 line
+  	start:
+	dur:
+   	line:
 	wordInfos: {
 		word
 		stem
@@ -18,21 +18,24 @@ function getLineInfosFromXML(subsDat, srcLang, transLang) {
         subsArr.push({
             start: parseFloat(subtitleNode.getAttribute('start')),
             dur: parseFloat(subtitleNode.getAttribute('dur')),
-            line: subtitleNode.textContent,
+			line: subtitleNode.textContent,
+			lang: srcLang,
+			transLang: transLang,
 			wordInfos: getWordInfos(subtitleNode.textContent, srcLang, transLang)
         })
     }
 	return subsArr
 }
- 
+
+let stemmers = {}
+
 function getWordInfos(text, srcLang, transLang) {
   let words = text.split(" ")
   let wordInfos = []
   for (let word of words) {
-  	let wordFmt = word.replace(/[^\w\d ]/g, '').trim().toLowerCase()
   	let wordInfo = {
 		word: word,
-		stem: getStemmed(wordFmt, srcLang)
+		stem: getStemmed(word, srcLang)
 	}
 	if (transDict[srcLang] 
 		&& transDict[srcLang][wordInfo.stem] 
@@ -48,7 +51,9 @@ function getWordInfos(text, srcLang, transLang) {
 }
 
 function getStemmed(word, lang) {
-	return snowballFactory.newStemmer(lang).stem(word)
+	if (!stemmers[lang])
+		stemmers[lang] = snowballFactory.newStemmer(lang)
+	return stemmers[lang].stem(word.replace(/[^\w\d ]/g, '').trim().toLowerCase())
 }
 
 // function getWordInfo(srcWord, srcLang, transLang) {
