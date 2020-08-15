@@ -291,29 +291,38 @@ function toggleHintsBox() {
 	}
 }
 
-function generateHintsLine(subtitle, highlightArray) {
-	let wordRow = [], transRow = [], posRow = [], knownCountRow = []
-	let kw = JSON.parse(localStorage.getItem('knownWords'))
-	subtitle.wordInfos.forEach((wordInfo, i) => {
-		let word = wordInfo.word
-		if (highlightArray && highlightArray[i])
-			word = `<span style="color: ${highlightArray[i]}">${word}</span>`
-		wordRow.push(word)
-		transRow.push(wordInfo.trans)
-		posRow.push(wordInfo.pos)
-		knownCountRow.push(kw && kw[subtitle.lang] && kw[subtitle.lang][wordInfo.stem] ?  kw[subtitle.lang][wordInfo.stem] : 0)
-	})
+function generateHintsLine(subtitle, options, highlightArray) {
+	if (!options)
+		options = {
+			word: true, 
+			trans: true
+		}
 	let table = `<span style="margin: 0 auto; display: grid; grid-template-columns: 2em auto">
 		<span style="grid-column: 1">
 			<button style="cursor: pointer;" onclick="showLineInfo('${subtitle.line}')">➡️</button>
 		</span>
 		<table border="1" style="grid-column: 2">` 
-	table += getHtmlRow(wordRow, 'showWordInfo(event)') 
-	table += getHtmlRow(knownCountRow)
-	table += getHtmlRow(transRow) 
-	table += getHtmlRow(posRow) 
-	table += '</table>'
-	table += `</span>`
+	let wordRow = [], transRow = [], synsRow = []
+	//let kw = JSON.parse(localStorage.getItem('knownWords'))
+	subtitle.wordInfos.forEach((wordInfo, i) => {
+		if (options.word) {
+			let word = wordInfo.word
+			if (highlightArray && highlightArray[i])
+				word = `<span style="color: ${highlightArray[i]}">${word}</span>`
+			wordRow.push(word)
+		}
+		if (options.trans)
+			transRow.push(wordInfo.trans ? wordInfo.trans : wordInfo.word)
+		if (options.syns)
+			synsRow.push(wordInfo.syns ? wordInfo.syns : wordInfo.word)
+	})
+	if (options.word)
+		table += getHtmlRow(wordRow, 'showWordInfo(event)') 
+	if (options.trans)
+		table += getHtmlRow(transRow) 
+	if (options.syns)
+		table += getHtmlRow(synsRow) 
+	table += '</table></span>'
 	return table
 }
 
@@ -325,16 +334,30 @@ function showHints(subs) {
 		</div> 
 		<div id='wordInfo' style='display: none'>
 			<a href='#' onclick='document.getElementById("wordInfo").style.display = "none"'>X</a><br>
-			<iframe width='800' height='400'></iframe>
-			<iframe width='800' height='400'></iframe>
+			<iframe width='800' height='250'></iframe>
+			<iframe width='800' height='250'></iframe>
+			<iframe width='800' height='250'></iframe>
 		</div>
 		${subs.map(generateHintsLine).join('<br>')}`
 }
 
 function getHtmlRow(cells, linkFunc) {
-	let link = linkFunc ? `onclick='${linkFunc}'` : ""
-	let cursor = linkFunc ? 'cursor: pointer' : ''
-	return `<tr><td ${link} style='text-align: center; ${cursor}'>${cells.join(`</td><td ${link} style="text-align: center; ${cursor}">`)}</td></tr>`
+	cells = cells.map(defs => {
+		if (defs && Array.isArray(defs)) {
+			defs = defs.map(def => {
+				let trans = def.trans
+				if (def.trans && Array.isArray(def.trans)) {
+					trans = def.trans.map(t => `<span onclick='showWordInfo(event)' style='cursor: pointer'>${t}</span>`).join('<br>')
+				}
+				def = `(${def.pos}) ${trans}`
+				return def
+			}).join('<hr>')
+		}
+		return defs
+	})
+	let onclick = linkFunc ? `onclick='${linkFunc}'` : ""
+	let style = `style="text-align: center; vertical-align: top; ${linkFunc ? 'cursor: pointer' : ''}"`
+	return `<tr><td ${onclick} ${style}>${cells.join(`</td><td ${onclick} ${style}>`)}</td></tr>`
 }
 
 function showWordInfo(e) {
@@ -342,8 +365,10 @@ function showWordInfo(e) {
 	let wordInfoBox = document.getElementById('wordInfo')
 	wordInfoBox.style.display = 'block'
 	let iframes = wordInfoBox.querySelectorAll('iframe')
-	iframes[0].src = `https://www.interglot.com/dictionary/en/nl/search/?q=${e.target.innerHTML}`
-	iframes[1].src = `https://woordenlijst.org/#/?q=${e.target.innerHTML}`
+	let foreignWord = e.target.innerHTML
+	iframes[0].src = `https://www.interglot.com/dictionary/en/nl/search/?q=${foreignWord}`
+	iframes[1].src = `https://woordenlijst.org/#/?q=${foreignWord}`
+	iframes[2].src = `https://nl.wiktionary.org/wiki/${foreignWord}`
 }
 
 function showLineInfo(line) {
@@ -357,7 +382,7 @@ function showLineInfo(line) {
 function loadPlayer(videoId) {
 	//if (subs) {
 	    player = new YT.Player('ytplayer', {
-	      height: '90%',
+	      height: '50%',
 	      width: '100%',
 	      videoId: videoId,
 	      playerVars: {
@@ -417,6 +442,7 @@ function playSub(event) {
 								<button id="showSubtitleBtn" onclick="showSubtitle(this)" style="cursor: pointer" title="Text">🔤</button>
 								<button onclick="playSubtitle()" style="cursor: pointer" title="Repeat">🔁</button>
 								<div class="result"></div>`)
+							setResultBox(generateHintsLine(subs[i], {syns: true}))
 						}, ((startMargin * 2) + subs[i + 1].start - subs[i].start) * 1000/player.getPlaybackRate())
 					break
 				} else if (currentTimeSecs < subs[i].start) {
@@ -436,46 +462,59 @@ function onEventTestInput(e) {
 		document.getElementById('showSubtitleBtn').click()
 }
 
+let testInputBgColor = 'yellow'
+
 function showSubtitle(btn) {
-	if (btn.style.backgroundColor === 'blue') {
-		setResultBox("")
-		btn.style.backgroundColor = ''
-		document.getElementById('testInput').readOnly = false
-	} else {
-		document.getElementById('testInput').readOnly = true
-		let currentTimeSecs = player.getCurrentTime()
-		let knownWords = JSON.parse(localStorage.getItem("knownWords"))
-		if (!knownWords)
-			knownWords = {}
-		for (let i = 2; i < subs.length; i++) {
-			if (subs[i].start > currentTimeSecs) {
-				let sub = subs[i - 2]
-				let testWords = document.getElementById('testInput').value.split(' ')
-				let hasWrong = testWords.length !== sub.wordInfos.length
-				sub.wordInfos.forEach((wordInfo, j) => {
-					if (testWords[j] && wordInfo.stem === getStemmed(testWords[j], sub.lang)) {
-						testWords[j] = "yellow"
-						if (!knownWords[sub.lang])
-							knownWords[sub.lang] = {}
-						if (!knownWords[sub.lang][wordInfo.stem])
-							knownWords[sub.lang][wordInfo.stem] = 0
-						knownWords[sub.lang][wordInfo.stem]++
-					} else {
-						testWords[j] = "red"
-						hasWrong = true
-					}
-				})
-				if (!hasWrong)
-					testWords = testWords.map(w => "greenyellow")
-				setResultBox(generateHintsLine(sub, testWords))
-				btn.style.backgroundColor = 'blue'
-				break
+	let testInput = document.getElementById('testInput')
+	let currentTimeSecs = player.getCurrentTime()
+	// let knownWords = JSON.parse(localStorage.getItem("knownWords"))
+	// if (!knownWords)
+	// 	knownWords = {}
+	for (let i = 2; i < subs.length; i++) {
+		if (subs[i].start > currentTimeSecs) {
+			let sub = subs[i - 2]
+			if (btn.style.backgroundColor === testInputBgColor) {
+				setResultBox(generateHintsLine(sub, {syns: true}))
+				btn.style.backgroundColor = ''
+				testInput.style.backgroundColor = ''
+				testInput.readOnly = false
+			} else {
+				setResultBox(generateHintsLine(sub, undefined, getHighlightedWords(sub /*, knownWords*/)))
+				btn.style.backgroundColor = testInputBgColor
+				testInput.style.backgroundColor = testInputBgColor
+				testInput.readOnly = true	
+			}
+			break
+		}
+	}
+	//localStorage.setItem("knownWords", JSON.stringify(knownWords))
+	//let kw = Object.entries(knownWords[subs[0].lang]).sort((a, b) => b[1] - a[1] )
+}
+
+function getHighlightedWords(sub, knownWords) {
+	let testWords = document.getElementById('testInput').value.split(' ')
+	let highlighted = []
+	let hasWrong = testWords.length !== sub.wordInfos.length
+	sub.wordInfos.forEach((wordInfo, j) => {
+		let currWord = testWords[j]
+		if (currWord && wordInfo.stem === getStemmed(currWord, sub.lang)) {
+			highlighted.push("yellow")
+			if (knownWords) {
+				if (!knownWords[sub.lang])
+				knownWords[sub.lang] = {}
+				if (!knownWords[sub.lang][wordInfo.stem])
+					knownWords[sub.lang][wordInfo.stem] = 0
+				knownWords[sub.lang][wordInfo.stem]++
 			}
 		}
-		localStorage.setItem("knownWords", JSON.stringify(knownWords))
-		let kw = Object.entries(knownWords[subs[0].lang]).sort((a, b) => b[1] - a[1] )
-		console.log(kw)
-	}
+		else {
+			highlighted.push("red")
+			hasWrong = true
+		}
+	})
+	if (!hasWrong)
+		highlighted = highlighted.map(w => "greenyellow")
+	return highlighted
 }
 
 function playSubtitle() {
@@ -556,10 +595,10 @@ function loadSubtitle(ts) {
 	//console.log(JSON.stringify(state))
     setTimeout(() => {
         //if (currentTs === ts) {
+			player.pauseVideo()
 			document.getElementById('subtitle').innerHTML = generateHintsLine(subs[state.index]) 
 			// getHiddenWordsUI(subs[state.index].wordInfos).join('')
 			//selfplay = true
-			player.pauseVideo()
 			// setTimeout(() => {
 			// 	player.playVideo()
 				//setNextSubtitleState()

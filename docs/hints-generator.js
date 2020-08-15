@@ -37,13 +37,38 @@ function getWordInfos(text, srcLang, transLang) {
 		word: word,
 		stem: getStemmed(word, srcLang)
 	}
-	if (transDict[srcLang] 
-		&& transDict[srcLang][wordInfo.stem] 
-		&& transDict[srcLang][wordInfo.stem]['langs'][transLang]) {
-		let def = transDict[srcLang][wordInfo.stem]['langs'][transLang][0]
-  		wordInfo.trans = def.trans[0]
-		wordInfo.ipa = def.ipa
-	 	wordInfo.pos = def.pos
+	if (transDict[srcLang]) {
+		let fmtWord = getFormattedWord(wordInfo.word) 
+		if ((transDict[srcLang][fmtWord] && transDict[srcLang][fmtWord]['langs'][transLang])
+			|| (transDict[srcLang][fmtWord] && transDict[srcLang][fmtWord]['langs'][transLang])) {
+			wordInfo.trans = transDict[srcLang][fmtWord]['langs'][transLang]
+		} else if ((transDict[srcLang][wordInfo.stem] && transDict[srcLang][wordInfo.stem]['langs'][transLang])
+			|| (transDict[srcLang][wordInfo.stem] && transDict[srcLang][wordInfo.stem]['langs'][transLang])) {
+			wordInfo.trans = transDict[srcLang][wordInfo.stem]['langs'][transLang]
+		}
+		if (wordInfo.trans && Array.isArray(wordInfo.trans)) {
+			let synsDict = {}
+			for (let def of wordInfo.trans) {
+				if (def.trans && Array.isArray(def.trans)) {
+					for (let trn of def.trans) {
+						if (transDict[transLang] 
+							&& transDict[transLang][trn]
+							&& transDict[transLang][trn]['langs']
+							&& transDict[transLang][trn]['langs'][srcLang]
+							&& transDict[transLang][trn]['langs'][srcLang].length > 0) {
+							for (let syn of transDict[transLang][trn]['langs'][srcLang]) {
+								synsDict[JSON.stringify(syn)] = true
+							}
+						}
+						
+					}
+				}
+			}
+			wordInfo.syns = []
+			for (let synsStr of Object.keys(synsDict)) {
+				wordInfo.syns.push(JSON.parse(synsStr))
+			}
+		}
 	}
   	wordInfos.push(wordInfo)	
   }
@@ -53,7 +78,11 @@ function getWordInfos(text, srcLang, transLang) {
 function getStemmed(word, lang) {
 	if (!stemmers[lang])
 		stemmers[lang] = snowballFactory.newStemmer(lang)
-	return stemmers[lang].stem(word.replace(/[^\w\d ]/g, '').trim().toLowerCase())
+	return stemmers[lang].stem(getFormattedWord(word))
+}
+
+function getFormattedWord(word) {
+	return word.replace(/[^\w\d ]/g, '').trim().toLowerCase()
 }
 
 // function getWordInfo(srcWord, srcLang, transLang) {
