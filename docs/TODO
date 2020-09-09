@@ -1,8 +1,11 @@
 
-v1 improvements:
+- press enter to progress to next step
+- link chrome extension to github link
 - display sentence structure variations. 
   - Like vocab, have list of difference sentence structures and record how many times seen/guessed.
-- voice commands - play, repeat, record, show
+- voice commands - play, next, back, repeat, record, show
+- OK live update as you type the answer
+- OK show hint: number of letters in word using dots
 - OK better translator
   - wrong translations
   - not splitting words
