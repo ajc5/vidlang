@@ -39,13 +39,14 @@ Steps:
 // include trans.js, lang-names.js
 
 let player, 
+	playerInited = false,
     subs,
     state,
     playbackRate = 0.7,
 	currenTs,
 	langs = {native: "en", foreign: "nl"},
     startTimeMs = new Date().getTime()
-    currSubIdx = 0
+	currSubIdx = 0
 let tag = document.createElement('script')
 tag.src = "https://www.youtube.com/iframe_api"
 let firstScriptTag = document.getElementsByTagName('script')[0]
@@ -115,6 +116,12 @@ recognition.onnomatch = function(event) {
 
 recognition.onerror = function(event) {
 	console.log('Error occurred in recognition: ' + event.error)
+}
+
+function checkAndPlayVideo(e) {
+	if ((e.keyCode === 32 || e.keyCode === 13) /* space or enter */ && playerInited && document.getElementById("testInput") === null) {
+		player.playVideo()
+	}
 }
 
 function setResultBox(html, idx) {
@@ -423,11 +430,13 @@ function loadPlayer(videoId) {
 	        onReady: onPlayerReady,
 	        onStateChange: playSub
 	      }
-	    })
+		})
 	//}
 }
 
 function onPlayerReady() {
+	playerInited = true
+	//console.log('player inited')
     player.setPlaybackRate(playbackRate)
 }
 
@@ -450,6 +459,7 @@ let userPaused = false
 let startMargin = 0.3
 
 function playSub(event) {
+	//console.log('hido playsub')
 	let currentTimeSecs = player.getCurrentTime()
 	if (event.data === 1) {	// playing
 		if (currentTimeSecs < subs[0].start) {
@@ -468,10 +478,11 @@ function playSub(event) {
 								<div>
 									<button onclick="recognition.start()" style="cursor: pointer" title="Record">🔴</button>
 									<input id="testInput" onkeyup="onEventTestInput(event)" onclick="onEventTestInput(event)" type="text" size="100"></input>
-									<button id="showSubtitleBtn" onclick="showSubtitle(this)" style="cursor: pointer" title="Text">🆗</button>
+									<button id="showFullAnswerOrNextSubtitleBtn" onclick="showFullAnswerOrNextSubtitle(this)" style="cursor: pointer" title="Text">🆗</button>
 									<button onclick="playSubtitle()" style="cursor: pointer" title="Repeat">🔁</button>
 								</div>
 								<div class="result"></div>`)
+							document.getElementById("testInput").focus()
 							setResultBox(generateHintsLine(subs[i], questionHints), i)
 						}, ((startMargin * 2) + subs[i + 1].start - subs[i].start) * 1000/player.getPlaybackRate())
 					break
@@ -486,11 +497,14 @@ function playSub(event) {
 }
 
 function onEventTestInput(e) {
-	if ((e.type === "click" && e.target.readOnly === true) || e.keyCode === 13)
-		document.getElementById('showSubtitleBtn').click()
-	else {
+	// shows full answer or next subtitle
+	//console.log('entered', e)
+	if ((e.type === "click" && e.target.readOnly === true) || e.keyCode === 13 /* Enter */) {
+		//console.log('nexttt')
+		document.getElementById('showFullAnswerOrNextSubtitleBtn').click()
+	} else {	// shows continously updated answer
 		let text = e.target.value
-		console.log(text)
+		//console.log(text)
 		let words = text.split(' ')
 		for (let i = 0; i < words.length; i++) {
 			document.getElementById(`hidden${i}`).style.backgroundColor = getFormattedWord(subs[currSubIdx].wordInfos[i].word) === getFormattedWord(words[i]) ? 'green' : 'red'
@@ -500,7 +514,7 @@ function onEventTestInput(e) {
 
 let testInputBgColor = 'yellow'
 
-function showSubtitle(btn) {
+function showFullAnswerOrNextSubtitle(btn) {
 	let testInput = document.getElementById('testInput')
 	let currentTimeSecs = player.getCurrentTime()
 	// let knownWords = JSON.parse(localStorage.getItem("knownWords"))
