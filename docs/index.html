@@ -12,7 +12,7 @@
 <body bgcolor="black" style="color: white; height: 100%" onkeyup="checkAndPlayVideo(event)">
 	<button id="homeBtn" style="display: none; position: fixed; top: 0; left: 0" onclick="location = '//' + location.host + location.pathname">🏠</button>
 	<div id="hintsBtn" style="display: none; position: fixed; top: 0px; right: 10px;">
-		<button onclick="toggleHintsBox()" style="cursor: pointer">↕️</button>
+		<button onclick="toggleHintsBox()" style="cursor: pointer">☰</button>
 	</div>
 	<div id="hints" style="display: none; background: grey; position: fixed; top: 30px; right: 10px; width: 800px">
 		<div>Hints</div>
@@ -51,7 +51,7 @@
 	<script>
 		if (new URL(window.location.href.toString()).searchParams.get('v') === null) {
 			document.getElementById('subtitle').innerHTML = `
-				Youtube Video ID/URL: <input id="videoInput" onkeyup="if (event.keyCode === 13) playVideo()" type="text" size="50"></input>
+				Youtube Video ID/URL: <input id="videoInput" onkeyup="if (event.key === 'Enter') playVideo()" type="text" size="50"></input>
 				<button disabled title="Open">📂</button>
 				<button onclick="playVideo()" title="Play">▶️</button>
 				&nbsp; &nbsp; &nbsp; 

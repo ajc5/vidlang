@@ -1,9 +1,9 @@
-
-- link chrome extension to github link
+- support text translation. Add support in chrome extension for articles.
 - display sentence structure variations. 
   - Like vocab, have list of difference sentence structures and record how many times seen/guessed.
-- voice commands - play, next, back, repeat, record, show
 
+- OK link chrome extension to github link
+- OK keyboard shortcuts - play, next, back, repeat, record, show
 - OK press enter to progress to next step
 - OK live update as you type the answer
 - OK show hint: number of letters in word using dots

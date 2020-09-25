@@ -95,13 +95,14 @@ var SpeechGrammarList = SpeechGrammarList || webkitSpeechGrammarList
 var SpeechRecognitionEvent = SpeechRecognitionEvent || webkitSpeechRecognitionEvent
 
 var recognition = new SpeechRecognition();
-recognition.continuous = true;
+recognition.continuous = false;
 recognition.lang = langs.foreign;
-recognition.interimResults = false;
+recognition.interimResults = true;
 recognition.maxAlternatives = 1;
 
 recognition.onresult = function(event) {
 	document.getElementById('testInput').value = event.results[0][0].transcript
+	document.getElementById("testInput").click()
 	console.log(event.results[0][0].transcript)
   	console.log(`✅ ${Math.round(event.results[0][0].confidence * 100)}%`)
 }
@@ -119,9 +120,19 @@ recognition.onerror = function(event) {
 }
 
 function checkAndPlayVideo(e) {
-	if ((e.keyCode === 32 || e.keyCode === 13) /* space or enter */ && playerInited && document.getElementById("testInput") === null) {
-		player.playVideo()
+	if (playerInited) {
+		let testInput = document.getElementById("testInput")
+		if (e.ctrlKey && e.key === 'i') {
+			repeatSubtitle()
+		} else if (testInput) {
+			if (e.ctrlKey && e.key === 'u' && testInput.style.backgroundColor !== testInputBgColor) {
+				recognition.start()
+			}
+		} else if (e.key === " " || e.key === "Enter") {
+			player.playVideo()
+		}
 	}
+		
 }
 
 function setResultBox(html, idx) {
@@ -423,8 +434,8 @@ function loadPlayer(videoId) {
 	      playerVars: {
 	        origin: null,
 			rel: 0,
-			//cc_load_policy: 1,
-			//cc_lang_pref: langs.foreign
+			cc_load_policy: 1,
+			cc_lang_pref: langs.native
 	      },
 	      events: {
 	        onReady: onPlayerReady,
@@ -476,10 +487,10 @@ function playSub(event) {
 							player.pauseVideo()
 							setSubtitle(`
 								<div>
-									<button onclick="recognition.start()" style="cursor: pointer" title="Record">🔴</button>
+									<button onclick="recognition.start()" style="cursor: pointer" title="Record">🔴 (^ u)</button>
 									<input id="testInput" onkeyup="onEventTestInput(event)" onclick="onEventTestInput(event)" type="text" size="100"></input>
-									<button id="showFullAnswerOrNextSubtitleBtn" onclick="showFullAnswerOrNextSubtitle(this)" style="cursor: pointer" title="Text">🆗</button>
-									<button onclick="playSubtitle()" style="cursor: pointer" title="Repeat">🔁</button>
+									<button id="showFullAnswerOrNextSubtitleBtn" onclick="showFullAnswerOrNextSubtitle(this)" style="cursor: pointer" title="Text">🆗 (↵)</button>
+									<button onclick="repeatSubtitle()" style="cursor: pointer" title="Repeat">🔁 (^ i)</button>
 								</div>
 								<div class="result"></div>`)
 							document.getElementById("testInput").focus()
@@ -499,7 +510,7 @@ function playSub(event) {
 function onEventTestInput(e) {
 	// shows full answer or next subtitle
 	//console.log('entered', e)
-	if ((e.type === "click" && e.target.readOnly === true) || e.keyCode === 13 /* Enter */) {
+	if ((e.type === "click" && e.target.readOnly === true) || e.key === "Enter") {
 		//console.log('nexttt')
 		document.getElementById('showFullAnswerOrNextSubtitleBtn').click()
 	} else {	// shows continously updated answer
@@ -566,11 +577,11 @@ function getHighlightedWords(sub, knownWords) {
 		}
 	})
 	if (!hasWrong)
-		highlighted = highlighted.map(w => "greenyellow")
+		highlighted = highlighted.map(w => "lightseagreen")
 	return highlighted
 }
 
-function playSubtitle() {
+function repeatSubtitle() {
 	let currentTimeSecs = player.getCurrentTime()
 	for (let i = 2; i < subs.length; i++) {
 		if (subs[i].start > currentTimeSecs) {
